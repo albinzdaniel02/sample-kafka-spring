@@ -23,7 +23,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
 @SpringBootTest
-@EmbeddedKafka(partitions = 3, topics = { "orders" }, bootstrapServersProperty = "spring.kafka.bootstrap-servers")
+@EmbeddedKafka(partitions = 3, topics = { "orders", "orders.DLT" }, bootstrapServersProperty = "spring.kafka.bootstrap-servers")
 @ActiveProfiles("test")
 @DirtiesContext
 class OrderConsumerServiceTest {
@@ -34,9 +34,13 @@ class OrderConsumerServiceTest {
     @Autowired
     private OrderConsumerService orderConsumerService;
 
+    @Autowired
+    private OrderDltConsumerService orderDltConsumerService;
+
     @BeforeEach
     void setUp() {
         orderConsumerService.clearConsumedRecords();
+        orderDltConsumerService.clearDltRecords();
     }
 
     @Test
@@ -138,5 +142,28 @@ class OrderConsumerServiceTest {
         for (int i = 1; i < custBRecords.size(); i++) {
             assertThat(custBRecords.get(i).getOffset()).isGreaterThan(custBRecords.get(i-1).getOffset());
         }
+    }
+
+    @Test
+    void testPoisonMessageAndDltRecovery() throws Exception {
+        OrderPlaced poisonOrder = OrderPlaced.builder()
+                .orderId("poison-1")
+                .customerId("cust-poison")
+                .productName("Poison Product")
+                .quantity(-1) // Invalid quantity
+                .price(new BigDecimal("99.99"))
+                .timestamp(LocalDateTime.now())
+                .build();
+
+        kafkaTemplate.send("orders", "cust-poison", poisonOrder).get();
+
+        // Wait for it to be routed to DLT and consumed by OrderDltConsumerService
+        await().atMost(Duration.ofSeconds(15)).untilAsserted(() -> {
+            assertThat(orderDltConsumerService.getDltRecords()).hasSize(1);
+        });
+
+        OrderDltConsumerService.DltRecord dltRecord = orderDltConsumerService.getDltRecords().get(0);
+        assertThat(dltRecord.getOrder().getOrderId()).isEqualTo("poison-1");
+        assertThat(dltRecord.getKey()).isEqualTo("cust-poison");
     }
 }

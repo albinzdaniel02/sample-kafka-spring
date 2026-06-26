@@ -1,7 +1,6 @@
 package com.example.ordermanagement.consumer;
 
 import com.example.ordermanagement.model.OrderPlaced;
-import com.example.ordermanagement.exception.InvalidOrderException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.support.KafkaHeaders;
@@ -15,38 +14,34 @@ import java.util.List;
 
 @Slf4j
 @Service
-public class OrderConsumerService {
+public class OrderDltConsumerService {
 
-    private final List<ConsumedRecord> consumedRecords = Collections.synchronizedList(new ArrayList<>());
+    private final List<DltRecord> dltRecords = Collections.synchronizedList(new ArrayList<>());
 
-    @KafkaListener(topics = "orders", groupId = "order-group")
+    @KafkaListener(topics = "orders.DLT", groupId = "order-dlt-group")
     public void consume(@Payload OrderPlaced order,
                         @Header(KafkaHeaders.RECEIVED_PARTITION) int partition,
                         @Header(KafkaHeaders.OFFSET) long offset,
                         @Header(KafkaHeaders.RECEIVED_KEY) String key) {
-        log.info("Consumed OrderPlaced event: {} on partition: {}, offset: {}, key: {}", order, partition, offset, key);
-        if (order.getQuantity() == null || order.getQuantity() <= 0) {
-            log.warn("Validation failed for order {}: quantity must be greater than 0", order.getOrderId());
-            throw new InvalidOrderException("Invalid order quantity: " + order.getQuantity());
-        }
-        consumedRecords.add(new ConsumedRecord(order, partition, offset, key));
+        log.info("Consumed DLT OrderPlaced event: {} on partition: {}, offset: {}, key: {}", order, partition, offset, key);
+        dltRecords.add(new DltRecord(order, partition, offset, key));
     }
 
-    public List<ConsumedRecord> getConsumedRecords() {
-        return new ArrayList<>(consumedRecords);
+    public List<DltRecord> getDltRecords() {
+        return new ArrayList<>(dltRecords);
     }
 
-    public void clearConsumedRecords() {
-        consumedRecords.clear();
+    public void clearDltRecords() {
+        dltRecords.clear();
     }
 
-    public static class ConsumedRecord {
+    public static class DltRecord {
         private final OrderPlaced order;
         private final int partition;
         private final long offset;
         private final String key;
 
-        public ConsumedRecord(OrderPlaced order, int partition, long offset, String key) {
+        public DltRecord(OrderPlaced order, int partition, long offset, String key) {
             this.order = order;
             this.partition = partition;
             this.offset = offset;
