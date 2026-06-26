@@ -15,7 +15,7 @@ public class OrderProducerService {
     private static final String TOPIC = "orders";
 
     public void sendOrderPlaced(OrderPlaced orderPlaced) {
-        String key = orderPlaced.getCustomerId();
+        String key = orderPlaced.customerId();
         log.info("Sending OrderPlaced event: key={}, order={}", key, orderPlaced);
         kafkaTemplate.send(TOPIC, key, orderPlaced)
                 .whenComplete((result, ex) -> {

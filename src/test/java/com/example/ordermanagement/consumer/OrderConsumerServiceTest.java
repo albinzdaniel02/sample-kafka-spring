@@ -85,7 +85,7 @@ class OrderConsumerServiceTest {
         }
 
         // Wait for all sends to complete
-        CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).get();
+        CompletableFuture.allOf(futures.toArray(new CompletableFuture<?>[0])).get();
 
         // Wait for all messages to be consumed
         await().atMost(Duration.ofSeconds(15)).untilAsserted(() -> {
@@ -96,51 +96,51 @@ class OrderConsumerServiceTest {
 
         // Verify cust-A records
         List<OrderConsumerService.ConsumedRecord> custARecords = records.stream()
-                .filter(r -> "cust-A".equals(r.getKey()))
+                .filter(r -> "cust-A".equals(r.key()))
                 .collect(Collectors.toList());
 
         assertThat(custARecords).hasSize(messageCount);
-        int expectedPartitionA = custARecords.get(0).getPartition();
+        int expectedPartitionA = custARecords.get(0).partition();
         
         // Assert that all cust-A records went to the same partition
         for (OrderConsumerService.ConsumedRecord r : custARecords) {
-            assertThat(r.getPartition()).isEqualTo(expectedPartitionA);
+            assertThat(r.partition()).isEqualTo(expectedPartitionA);
         }
 
         // Assert that cust-A records are processed in the strict order they were sent (increasing offsets)
         List<OrderConsumerService.ConsumedRecord> sortedByOffsetA = new ArrayList<>(custARecords);
-        sortedByOffsetA.sort(Comparator.comparingLong(OrderConsumerService.ConsumedRecord::getOffset));
+        sortedByOffsetA.sort(Comparator.comparingLong(OrderConsumerService.ConsumedRecord::offset));
 
         for (int i = 0; i < messageCount; i++) {
-            assertThat(custARecords.get(i).getOffset()).isEqualTo(sortedByOffsetA.get(i).getOffset());
+            assertThat(custARecords.get(i).offset()).isEqualTo(sortedByOffsetA.get(i).offset());
         }
 
         // Verify cust-B records
         List<OrderConsumerService.ConsumedRecord> custBRecords = records.stream()
-                .filter(r -> "cust-B".equals(r.getKey()))
+                .filter(r -> "cust-B".equals(r.key()))
                 .collect(Collectors.toList());
 
         assertThat(custBRecords).hasSize(messageCount);
-        int expectedPartitionB = custBRecords.get(0).getPartition();
+        int expectedPartitionB = custBRecords.get(0).partition();
 
         // Assert that all cust-B records went to the same partition
         for (OrderConsumerService.ConsumedRecord r : custBRecords) {
-            assertThat(r.getPartition()).isEqualTo(expectedPartitionB);
+            assertThat(r.partition()).isEqualTo(expectedPartitionB);
         }
 
         List<OrderConsumerService.ConsumedRecord> sortedByOffsetB = new ArrayList<>(custBRecords);
-        sortedByOffsetB.sort(Comparator.comparingLong(OrderConsumerService.ConsumedRecord::getOffset));
+        sortedByOffsetB.sort(Comparator.comparingLong(OrderConsumerService.ConsumedRecord::offset));
 
         for (int i = 0; i < messageCount; i++) {
-            assertThat(custBRecords.get(i).getOffset()).isEqualTo(sortedByOffsetB.get(i).getOffset());
+            assertThat(custBRecords.get(i).offset()).isEqualTo(sortedByOffsetB.get(i).offset());
         }
         
         // Verify strict offset increment in consumed sequence to guarantee ordering is maintained
         for (int i = 1; i < custARecords.size(); i++) {
-            assertThat(custARecords.get(i).getOffset()).isGreaterThan(custARecords.get(i-1).getOffset());
+            assertThat(custARecords.get(i).offset()).isGreaterThan(custARecords.get(i-1).offset());
         }
         for (int i = 1; i < custBRecords.size(); i++) {
-            assertThat(custBRecords.get(i).getOffset()).isGreaterThan(custBRecords.get(i-1).getOffset());
+            assertThat(custBRecords.get(i).offset()).isGreaterThan(custBRecords.get(i-1).offset());
         }
     }
 
@@ -163,7 +163,7 @@ class OrderConsumerServiceTest {
         });
 
         OrderDltConsumerService.DltRecord dltRecord = orderDltConsumerService.getDltRecords().get(0);
-        assertThat(dltRecord.getOrder().getOrderId()).isEqualTo("poison-1");
-        assertThat(dltRecord.getKey()).isEqualTo("cust-poison");
+        assertThat(dltRecord.order().orderId()).isEqualTo("poison-1");
+        assertThat(dltRecord.key()).isEqualTo("cust-poison");
     }
 }

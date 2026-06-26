@@ -28,15 +28,23 @@ public class OrderController {
     public ResponseEntity<OrderPlaced> createOrder(@Valid @RequestBody OrderPlaced orderPlaced) {
         log.info("Received request to place order: {}", orderPlaced);
         
-        if (orderPlaced.getOrderId() == null || orderPlaced.getOrderId().isBlank()) {
-            orderPlaced.setOrderId(UUID.randomUUID().toString());
+        String orderId = orderPlaced.orderId();
+        if (orderId == null || orderId.isBlank()) {
+            orderId = UUID.randomUUID().toString();
         }
-        if (orderPlaced.getTimestamp() == null) {
-            orderPlaced.setTimestamp(LocalDateTime.now());
+        
+        LocalDateTime timestamp = orderPlaced.timestamp();
+        if (timestamp == null) {
+            timestamp = LocalDateTime.now();
         }
 
-        orderProducerService.sendOrderPlaced(orderPlaced);
+        OrderPlaced updatedOrder = orderPlaced.toBuilder()
+                .orderId(orderId)
+                .timestamp(timestamp)
+                .build();
+
+        orderProducerService.sendOrderPlaced(updatedOrder);
         
-        return ResponseEntity.ok(orderPlaced);
+        return ResponseEntity.ok(updatedOrder);
     }
 }

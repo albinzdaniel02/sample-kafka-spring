@@ -30,11 +30,11 @@ class OrderPlacedTest {
         assertNotNull(json);
 
         OrderPlaced deserializedOrder = objectMapper.readValue(json, OrderPlaced.class);
-        assertEquals(order.getOrderId(), deserializedOrder.getOrderId());
-        assertEquals(order.getCustomerId(), deserializedOrder.getCustomerId());
-        assertEquals(order.getProductName(), deserializedOrder.getProductName());
-        assertEquals(order.getQuantity(), deserializedOrder.getQuantity());
-        assertEquals(order.getPrice(), deserializedOrder.getPrice());
-        assertEquals(order.getTimestamp(), deserializedOrder.getTimestamp());
+        assertEquals(order.orderId(), deserializedOrder.orderId());
+        assertEquals(order.customerId(), deserializedOrder.customerId());
+        assertEquals(order.productName(), deserializedOrder.productName());
+        assertEquals(order.quantity(), deserializedOrder.quantity());
+        assertEquals(order.price(), deserializedOrder.price());
+        assertEquals(order.timestamp(), deserializedOrder.timestamp());
     }
 }

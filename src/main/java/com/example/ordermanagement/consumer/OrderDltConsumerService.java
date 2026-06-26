@@ -35,33 +35,5 @@ public class OrderDltConsumerService {
         dltRecords.clear();
     }
 
-    public static class DltRecord {
-        private final OrderPlaced order;
-        private final int partition;
-        private final long offset;
-        private final String key;
-
-        public DltRecord(OrderPlaced order, int partition, long offset, String key) {
-            this.order = order;
-            this.partition = partition;
-            this.offset = offset;
-            this.key = key;
-        }
-
-        public OrderPlaced getOrder() {
-            return order;
-        }
-
-        public int getPartition() {
-            return partition;
-        }
-
-        public long getOffset() {
-            return offset;
-        }
-
-        public String getKey() {
-            return key;
-        }
-    }
+    public record DltRecord(OrderPlaced order, int partition, long offset, String key) {}
 }

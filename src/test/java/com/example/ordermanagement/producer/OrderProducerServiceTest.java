@@ -98,11 +98,11 @@ class OrderProducerServiceTest {
         
         OrderPlaced publishedOrder = record.value();
         assertThat(publishedOrder).isNotNull();
-        assertThat(publishedOrder.getCustomerId()).isEqualTo("cust-123");
-        assertThat(publishedOrder.getProductName()).isEqualTo("Sample Product");
-        assertThat(publishedOrder.getQuantity()).isEqualTo(2);
-        assertThat(publishedOrder.getPrice()).isEqualByComparingTo(new BigDecimal("99.99"));
-        assertThat(publishedOrder.getOrderId()).isNotEmpty();
-        assertThat(publishedOrder.getTimestamp()).isNotNull();
+        assertThat(publishedOrder.customerId()).isEqualTo("cust-123");
+        assertThat(publishedOrder.productName()).isEqualTo("Sample Product");
+        assertThat(publishedOrder.quantity()).isEqualTo(2);
+        assertThat(publishedOrder.price()).isEqualByComparingTo(new BigDecimal("99.99"));
+        assertThat(publishedOrder.orderId()).isNotEmpty();
+        assertThat(publishedOrder.timestamp()).isNotNull();
     }
 }
