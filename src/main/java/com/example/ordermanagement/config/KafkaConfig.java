@@ -107,7 +107,7 @@ public class KafkaConfig {
 
     @Bean
     public DefaultErrorHandler errorHandler(DeadLetterPublishingRecoverer recoverer) {
-        return new DefaultErrorHandler(recoverer, new FixedBackOff(1000L, 3L));
+        return new DefaultErrorHandler(recoverer, new FixedBackOff(1000L, 2L));
     }
 
     @Bean
