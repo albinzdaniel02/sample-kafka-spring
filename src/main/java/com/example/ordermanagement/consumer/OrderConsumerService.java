@@ -25,9 +25,11 @@ public class OrderConsumerService {
                         @Header(KafkaHeaders.OFFSET) long offset,
                         @Header(KafkaHeaders.RECEIVED_KEY) String key) {
         log.info("Consumed OrderPlaced event: {} on partition: {}, offset: {}, key: {}", order, partition, offset, key);
-        if (order.getQuantity() == null || order.getQuantity() <= 0) {
-            log.warn("Validation failed for order {}: quantity must be greater than 0", order.getOrderId());
-            throw new InvalidOrderException("Invalid order quantity: " + order.getQuantity());
+        if (order instanceof OrderPlaced(String orderId, String customerId, String productName, Integer quantity, java.math.BigDecimal price, java.time.LocalDateTime timestamp)) {
+            if (quantity == null || quantity <= 0) {
+                log.warn("Validation failed for order {}: quantity must be greater than 0", orderId);
+                throw new InvalidOrderException("Invalid order quantity: " + quantity);
+            }
         }
         consumedRecords.add(new ConsumedRecord(order, partition, offset, key));
     }
@@ -40,33 +42,5 @@ public class OrderConsumerService {
         consumedRecords.clear();
     }
 
-    public static class ConsumedRecord {
-        private final OrderPlaced order;
-        private final int partition;
-        private final long offset;
-        private final String key;
-
-        public ConsumedRecord(OrderPlaced order, int partition, long offset, String key) {
-            this.order = order;
-            this.partition = partition;
-            this.offset = offset;
-            this.key = key;
-        }
-
-        public OrderPlaced getOrder() {
-            return order;
-        }
-
-        public int getPartition() {
-            return partition;
-        }
-
-        public long getOffset() {
-            return offset;
-        }
-
-        public String getKey() {
-            return key;
-        }
-    }
+    public record ConsumedRecord(OrderPlaced order, int partition, long offset, String key) {}
 }

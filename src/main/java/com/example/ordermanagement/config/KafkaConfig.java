@@ -29,6 +29,7 @@ import java.util.Map;
 
 @Configuration
 @EnableKafka
+@SuppressWarnings("deprecation")
 public class KafkaConfig {
 
     @Value("${spring.kafka.bootstrap-servers:localhost:9092}")
