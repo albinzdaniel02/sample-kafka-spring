@@ -21,8 +21,16 @@ class KafkaConfigTest {
     @Autowired
     private NewTopic ordersDltTopic;
 
+    @Autowired
+    private org.springframework.kafka.listener.DeadLetterPublishingRecoverer deadLetterPublishingRecoverer;
+
+    @Autowired
+    private org.springframework.kafka.listener.DefaultErrorHandler errorHandler;
+
     @Test
     void testKafkaConfigBeans() {
+        assertNotNull(deadLetterPublishingRecoverer);
+        assertNotNull(errorHandler);
         assertNotNull(kafkaAdmin);
 
         assertNotNull(ordersTopic);
