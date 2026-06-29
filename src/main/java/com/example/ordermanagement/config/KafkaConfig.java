@@ -39,6 +39,48 @@ public class KafkaConfig {
     @Value("${spring.kafka.consumer.properties.spring.json.trusted.packages:com.example.ordermanagement.model}")
     private String trustedPackages;
 
+    // Producer Settings
+    @Value("${spring.kafka.producer.key-serializer:org.apache.kafka.common.serialization.StringSerializer}")
+    private String keySerializer;
+
+    @Value("${spring.kafka.producer.value-serializer:org.springframework.kafka.support.serializer.JsonSerializer}")
+    private String valueSerializer;
+
+    @Value("${spring.kafka.producer.properties.max.block.ms:5000}")
+    private String maxBlockMs;
+
+    @Value("${spring.kafka.producer.properties.request.timeout.ms:3000}")
+    private String producerRequestTimeout;
+
+    @Value("${spring.kafka.producer.properties.delivery.timeout.ms:120000}")
+    private String deliveryTimeout;
+
+    // Consumer Settings
+    @Value("${spring.kafka.consumer.key-deserializer:org.apache.kafka.common.serialization.StringDeserializer}")
+    private String keyDeserializer;
+
+    @Value("${spring.kafka.consumer.value-deserializer:org.springframework.kafka.support.serializer.JsonDeserializer}")
+    private String valueDeserializer;
+
+    @Value("${spring.kafka.consumer.properties.request.timeout.ms:30000}")
+    private String consumerRequestTimeout;
+
+    @Value("${spring.kafka.consumer.properties.session.timeout.ms:45000}")
+    private String sessionTimeout;
+
+    @Value("${spring.kafka.consumer.properties.fetch.min.bytes:1}")
+    private String fetchMinBytes;
+
+    @Value("${spring.kafka.consumer.properties.fetch.max.wait.ms:500}")
+    private String fetchMaxWait;
+
+    @Value("${spring.kafka.consumer.properties.max.partition.fetch.bytes:1048576}")
+    private String maxPartitionFetchBytes;
+
+    // Concurrency Settings
+    @Value("${spring.kafka.listener.concurrency:3}")
+    private Integer concurrency;
+
     @Bean
     public ObjectMapper jackson2ObjectMapper() {
         log.info("Configuring Shared com.fasterxml.jackson.databind.ObjectMapper");
@@ -76,12 +118,17 @@ public class KafkaConfig {
 
     @Bean
     public ProducerFactory<String, OrderPlaced> producerFactory(ObjectMapper objectMapper) {
-        log.info("Configuring ProducerFactory");
+        log.info("Configuring ProducerFactory with timeouts");
         Map<String, Object> configProps = new HashMap<>();
         configProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
-        configProps.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
-        configProps.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
+        configProps.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, keySerializer);
+        configProps.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, valueSerializer);
         
+        // Optimizations
+        configProps.put(ProducerConfig.MAX_BLOCK_MS_CONFIG, maxBlockMs);
+        configProps.put(ProducerConfig.REQUEST_TIMEOUT_MS_CONFIG, producerRequestTimeout);
+        configProps.put(ProducerConfig.DELIVERY_TIMEOUT_MS_CONFIG, deliveryTimeout);
+
         DefaultKafkaProducerFactory<String, OrderPlaced> factory = new DefaultKafkaProducerFactory<>(configProps);
         factory.setValueSerializer(new JsonSerializer<>(objectMapper));
         return factory;
@@ -95,13 +142,20 @@ public class KafkaConfig {
 
     @Bean
     public ConsumerFactory<String, OrderPlaced> consumerFactory(ObjectMapper objectMapper) {
-        log.info("Configuring ConsumerFactory");
+        log.info("Configuring ConsumerFactory with timeouts and fetch sizes");
         Map<String, Object> configProps = new HashMap<>();
         configProps.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
-        configProps.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-        configProps.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, JsonDeserializer.class);
+        configProps.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, keyDeserializer);
+        configProps.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, valueDeserializer);
         configProps.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
         configProps.put(JsonDeserializer.TRUSTED_PACKAGES, trustedPackages);
+
+        // Optimizations
+        configProps.put(ConsumerConfig.REQUEST_TIMEOUT_MS_CONFIG, consumerRequestTimeout);
+        configProps.put(ConsumerConfig.SESSION_TIMEOUT_MS_CONFIG, sessionTimeout);
+        configProps.put(ConsumerConfig.FETCH_MIN_BYTES_CONFIG, fetchMinBytes);
+        configProps.put(ConsumerConfig.FETCH_MAX_WAIT_MS_CONFIG, fetchMaxWait);
+        configProps.put(ConsumerConfig.MAX_PARTITION_FETCH_BYTES_CONFIG, maxPartitionFetchBytes);
 
         return new DefaultKafkaConsumerFactory<>(
                 configProps,
@@ -131,6 +185,15 @@ public class KafkaConfig {
         ConcurrentKafkaListenerContainerFactory<String, OrderPlaced> factory = new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(consumerFactory);
         factory.setCommonErrorHandler(errorHandler);
+
+        if (concurrency != null) {
+            log.info("Setting consumer concurrency to configured value: {}", concurrency);
+            factory.setConcurrency(concurrency);
+        } else {
+            log.info("Setting default consumer concurrency to: 3");
+            factory.setConcurrency(3);
+        }
+
         return factory;
     }
 }
