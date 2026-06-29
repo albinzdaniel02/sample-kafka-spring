@@ -92,10 +92,10 @@ All developer subagents must strictly adhere to the following workflow for execu
 
 ### Phase 4: SonarQube CI Quality Gates
 
-- [ ] **P4-01**: Integrate SonarQube checks in CI workflow.
+- [x] **P4-01**: Integrate SonarQube checks in CI workflow.
   - Add SonarQube / SonarCloud scanner step to `.github/workflows/ci.yml`.
   - Configure Maven/Gradle plugins to support code coverage (using JaCoCo) and SonarQube reporting.
 
-- [ ] **P4-EC**: Phase 4 Exit Check:
+- [x] **P4-EC**: Phase 4 Exit Check:
   - Validate the updated `.github/workflows/ci.yml` syntax.
   - Verify that the SonarQube scan configuration works correctly with build files.
