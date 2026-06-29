@@ -36,4 +36,9 @@ jobs:
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
       run: |
         chmod +x mvnw
-        ./mvnw clean verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=albinzdaniel02_sample-kafka-spring
+        if [ -z "${{ secrets.SONAR_TOKEN }}" ]; then
+          echo "SONAR_TOKEN is not set. Skipping SonarQube analysis."
+          ./mvnw clean verify
+        else
+          ./mvnw clean verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=albinzdaniel02_sample-kafka-spring
+        fi
